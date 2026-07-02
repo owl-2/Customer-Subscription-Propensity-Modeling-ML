@@ -1,203 +1,306 @@
-# Customer Subscription Propensity Modeling Using Random Forest
+# Bank Marketing Subscription Prediction using Machine Learning
 
-## Overview
+## Project Overview
 
-Direct marketing campaigns are widely used by banks to promote financial products such as term deposits. However, contacting every customer is costly and often results in low conversion rates.
+This project develops an end-to-end machine learning pipeline to predict whether a customer will subscribe to a term deposit based on demographic information, financial attributes, previous marketing interactions, and campaign characteristics.
 
-This project develops a machine learning model to predict whether a customer is likely to subscribe to a term deposit based on demographic, financial, and campaign-related information. By identifying high-probability customers, banks can improve campaign efficiency, reduce acquisition costs, and increase conversion rates.
+The objective is to help marketing teams identify high-probability customers, improve campaign targeting efficiency, and reduce customer acquisition costs.
 
 ---
 
 ## Business Problem
 
-Banks invest significant resources in telemarketing campaigns. The challenge is determining which customers are most likely to respond positively before allocating marketing resources.
+Direct marketing campaigns often contact thousands of customers with low conversion rates. Predicting which customers are most likely to subscribe enables:
 
-### Objective
-
-Build a predictive model that estimates the probability of a customer subscribing to a term deposit and ranks customers according to their likelihood of conversion.
-
-### Business Value
-
-* Improve marketing campaign ROI
-* Reduce unnecessary customer outreach
-* Increase subscription conversion rates
-* Enable data-driven customer targeting
-* Optimize resource allocation for sales teams
+* Improved marketing ROI
+* Better customer targeting
+* Reduced campaign costs
+* Increased conversion rates
+* Data-driven decision making
 
 ---
 
 ## Dataset
 
-The dataset contains customer demographics, financial attributes, and historical marketing campaign information.
+**Source:** UCI Bank Marketing Dataset
 
-### Features
-
-#### Customer Attributes
-
-* Age
-* Job Type
-* Marital Status
-* Education Level
-
-#### Financial Attributes
-
-* Account Balance
-* Housing Loan Status
-* Personal Loan Status
-* Credit Default History
-
-#### Campaign Attributes
-
-* Contact Method
-* Month of Contact
-* Call Duration
-* Number of Campaign Contacts
-* Previous Campaign Outcome
-* Days Since Previous Contact
+The dataset contains customer demographic information, banking attributes, and historical campaign interaction data.
 
 ### Target Variable
 
-**Subscription Status (y)**
+| Variable | Description                                                |
+| -------- | ---------------------------------------------------------- |
+| y        | Whether the customer subscribed to a term deposit (Yes/No) |
 
-* 1 = Customer subscribed to a term deposit
-* 0 = Customer did not subscribe
+### Dataset Characteristics
+
+* Class Imbalance:
+
+  * No: ~88%
+  * Yes: ~12%
+* Mixed numerical and categorical features
+* Real-world marketing campaign data
+* Suitable for binary classification
 
 ---
 
-## Machine Learning Approach
+## Project Structure
 
-### Data Preprocessing
+```text
+bank_data_analysis/
+│
+├── data/
+│
+├── models/
+│   └── xgboost_subscription_model.pkl
+│
+├── notebooks/
+│   └── bank_marketing_analysis.ipynb
+│
+├── src/
+│   ├── preprocess.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── predict.py
+│
+├── outputs/
+│   └── figures/
+│       ├── target_distribution.png
+│       ├── age_group_conversion.png
+│       ├── job_conversion.png
+│       ├── feature_importance.png
+│       └── roc_curve.png
+│
+└── README.md
+```
 
-* Missing value assessment
-* Binary feature encoding
-* One-hot encoding of categorical variables
-* Train-test split with stratification
-* Class imbalance handling
+---
 
-### Model Development
+## Exploratory Data Analysis
 
-A Random Forest Classifier was selected due to its ability to:
+Key analyses performed:
 
-* Capture non-linear relationships
-* Handle mixed feature types
-* Reduce overfitting through ensemble learning
-* Provide robust classification performance
-* Generate feature importance insights
+* Target class distribution
+* Age group conversion analysis
+* Job category conversion analysis
+* Contact method effectiveness
+* Campaign performance analysis
+* Feature relationship exploration
 
-### Hyperparameter Optimization
+### Key Insights
 
-RandomizedSearchCV was used with 5-fold cross-validation to identify optimal model parameters.
+#### Age Groups
 
-Optimization Metric:
+Customers aged 60+ showed the highest subscription rate.
 
-* ROC-AUC Score
+| Age Group | Subscription Rate |
+| --------- | ----------------- |
+| 60+       | 42.9%             |
+| 18-30     | 16.5%             |
+| 51-60     | 10.2%             |
+| 31-40     | 10.1%             |
+| 41-50     | 9.2%              |
+
+#### Occupation Analysis
+
+Top converting occupations:
+
+| Job        | Subscription Rate |
+| ---------- | ----------------- |
+| Student    | 29.2%             |
+| Retired    | 23.2%             |
+| Unemployed | 14.9%             |
+
+Lowest conversion:
+
+| Job         | Subscription Rate |
+| ----------- | ----------------- |
+| Blue-collar | 7.2%              |
+
+#### Contact Method Analysis
+
+| Contact Type | Subscription Rate |
+| ------------ | ----------------- |
+| Cellular     | 15.0%             |
+| Telephone    | 13.4%             |
+| Unknown      | 4.1%              |
+
+Cellular contact channels significantly outperformed unknown contacts.
+
+---
+
+## Feature Engineering
+
+Custom features were created to improve predictive performance:
+
+### Age Group
+
+Customer age segmented into business-relevant categories.
+
+### Balance Group
+
+Customer account balance categorized into:
+
+* Low
+* Medium
+* High
+* Very High
+
+### Contact Intensity
+
+```python
+campaign + previous
+```
+
+Measures total marketing interactions.
+
+### Campaign Efficiency
+
+```python
+duration / (campaign + 1)
+```
+
+Measures call effectiveness relative to campaign attempts.
+
+---
+
+## Machine Learning Pipeline
+
+A fully automated Scikit-learn pipeline was developed consisting of:
+
+### Preprocessing
+
+* StandardScaler for numerical variables
+* OneHotEncoder for categorical variables
+* Automated feature engineering
+
+### Model
+
+XGBoost Classifier
+
+Parameters:
+
+```python
+XGBClassifier(
+    n_estimators=200,
+    learning_rate=0.05,
+    max_depth=5,
+    random_state=42,
+    eval_metric='logloss'
+)
+```
 
 ---
 
 ## Model Performance
 
-### Key Results
+### Classification Metrics
 
-| Metric       | Score     |
-| ------------ | --------- |
-| ROC-AUC      | **0.923** |
-| KS Statistic | **0.714** |
+| Metric    | Value |
+| --------- | ----- |
+| Accuracy  | 91%   |
+| Precision | 65%   |
+| Recall    | 46%   |
+| F1 Score  | 54%   |
 
-### Why ROC-AUC?
+### Advanced Evaluation Metrics
 
-ROC-AUC measures the model's ability to distinguish between customers who subscribe and those who do not across different classification thresholds.
+| Metric       | Value |
+| ------------ | ----- |
+| ROC-AUC      | 0.929 |
+| KS Statistic | 72.05 |
 
-### Why KS Statistic?
+### Interpretation
 
-The Kolmogorov-Smirnov (KS) Statistic is widely used in banking, credit risk, and customer analytics to evaluate a model's discriminatory power.
-
-A KS score of **0.714** indicates strong separation between subscribers and non-subscribers, demonstrating the model's effectiveness in ranking customers by conversion likelihood.
+* ROC-AUC of 0.929 indicates excellent customer ranking capability.
+* KS Statistic of 72.05 demonstrates strong separation between subscribers and non-subscribers.
+* The model effectively identifies high-probability customers for targeted marketing campaigns.
 
 ---
 
-## Project Workflow
+## Feature Importance
+
+Top predictive factors included:
+
+* Previous campaign outcome success
+* Contact method
+* Call duration
+* Housing loan status
+* Month of contact
+* Campaign efficiency
+* Customer age
+
+---
+
+## Prediction Pipeline
+
+The project supports prediction on new customer records using:
+
+```bash
+python src/predict.py
+```
+
+Example Output:
 
 ```text
-Data Collection
-        ↓
-Data Cleaning & Encoding
-        ↓
-Exploratory Data Analysis
-        ↓
-Train-Test Split
-        ↓
-Random Forest Training
-        ↓
-Hyperparameter Optimization
-        ↓
-Probability Prediction
-        ↓
-ROC-AUC Evaluation
-        ↓
-KS Score Validation
-        ↓
-Customer Ranking
+Prediction: 1
+Subscription Probability: 55.95%
 ```
 
 ---
 
-## Technical Stack
+## Visualizations
 
-### Programming Language
+### Target Distribution
+
+![Target Distribution](outputs/figures/target_distribution.png)
+
+### Age Group Conversion Rate
+
+![Age Group Conversion](outputs/figures/age_group_conversion.png)
+
+### Job Conversion Rate
+
+![Job Conversion](outputs/figures/job_conversion.png)
+
+### Feature Importance
+
+![Feature Importance](outputs/figures/feature_importance.png)
+
+### ROC Curve
+
+![ROC Curve](outputs/figures/roc_curve.png)
+
+---
+
+## Technologies Used
 
 * Python
-
-### Data Analysis
-
 * Pandas
 * NumPy
-
-### Visualization
-
 * Matplotlib
-* Seaborn
-
-### Machine Learning
-
-* Scikit-Learn
-
-### Model Evaluation
-
-* ROC-AUC
-* KS Statistic
-* Cross Validation
-* Confusion Matrix
+* Scikit-learn
+* XGBoost
+* Joblib
+* Jupyter Notebook
 
 ---
 
-## Key Learnings
+## Future Improvements
 
-* Building classification models for business decision-making
-* Handling imbalanced datasets
-* Hyperparameter tuning using RandomizedSearchCV
-* Evaluating predictive models using ROC-AUC
-* Applying KS Statistic for customer propensity modeling
-* Translating machine learning results into business value
-
----
-
-## Future Enhancements
-
-* Feature importance analysis
-* SHAP-based model explainability
-* XGBoost and LightGBM benchmarking
-* Customer segmentation and propensity scoring
-* Model deployment using Flask/FastAPI
-* Real-time scoring pipeline
+* Hyperparameter optimization using Optuna
+* Threshold tuning for recall improvement
+* SHAP explainability analysis
+* Model deployment with FastAPI
+* Automated retraining pipeline
+* Customer propensity dashboard using Power BI or Tableau
 
 ---
 
 ## Author
 
-**Narmathaa Palanisamy**
+Narmathaa Palanisamy
 
-Biotechnology professional transitioning into Data Science with experience in experimental research, data analysis, machine learning, and predictive modeling. Interested in applying data-driven approaches to solve problems in healthcare, life sciences, and business analytics.
+Aspiring Data Scientist with a background in Biotechnology, Stem Cell Biology, Machine Learning, and Biomarker Discovery.
 
-
-
-
+Interested in applying AI and Machine Learning to healthcare, biotechnology, neuroscience, and business analytics.
